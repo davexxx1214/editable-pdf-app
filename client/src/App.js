@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'; // 确保导入 StandardFonts
 import fontkit from '@pdf-lib/fontkit';
 
 import './App.css';
@@ -32,36 +32,41 @@ function App() {
 
   // 提取文本实例
   const extractTextInstances = async (file, searchTerm) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
 
-    const instances = [];
+      const instances = [];
 
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
 
-      textContent.items.forEach((item) => {
-        if (item.str.includes(searchTerm)) { // 使用 includes 以匹配部分文本
-          const transform = item.transform;
-          const x = transform[4];
-          const y = transform[5];
-          instances.push({
-            id: instances.length + 1,
-            text: item.str,
-            pageNumber: pageNum,
-            x: x,
-            y: y,
-            width: item.width,
-            height: item.height,
-          });
-        }
-      });
+        textContent.items.forEach((item) => {
+          if (item.str.includes(searchTerm)) { // 使用 includes 以匹配部分文本
+            const transform = item.transform;
+            const x = transform[4];
+            const y = transform[5];
+            instances.push({
+              id: instances.length + 1,
+              text: item.str,
+              pageNumber: pageNum,
+              x: x,
+              y: y,
+              width: item.width,
+              height: item.height,
+            });
+          }
+        });
+      }
+
+      console.log('提取的文本实例:', instances); // 调试输出
+      setTextInstances(instances);
+    } catch (error) {
+      console.error('提取文本实例时发生错误:', error);
+      alert('提取文本实例时发生错误，请检查控制台以获取详细信息。');
     }
-
-    console.log('提取的文本实例:', instances); // 调试输出
-    setTextInstances(instances);
   };
 
   // 监听 searchText 变化，重新提取文本实例
@@ -116,8 +121,12 @@ function App() {
 
       pdfDoc.registerFontkit(fontkit);
 
-      const fontBytes = await loadFont();
-      const customFont = await pdfDoc.embedFont(fontBytes);
+      // 使用标准字体 Helvetica
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      // 如果需要使用自定义字体，请使用以下代码，并确保字体文件正确加载
+      // const fontBytes = await loadFont();
+      // const customFont = await pdfDoc.embedFont(fontBytes);
 
       const pages = pdfDoc.getPages();
 
@@ -126,30 +135,39 @@ function App() {
       const page = pages[pageNumber - 1];
       const { height: pageHeight } = page.getSize();
 
-      // 覆盖原有文本的背景
+      // 调整 y 坐标
+      const adjustedY = pageHeight - y - height;
+
+      console.log(`Page ${pageNumber} width: ${page.getWidth()}, height: ${pageHeight}`);
+      console.log(`Drawing rectangle at x:${x}, y:${adjustedY}, width:${width}, height:${height}`);
+      console.log(`Original text: "${selectedInstance.text}", replacing with: "${editText}"`);
+
+      // 绘制白色矩形覆盖原有文本
       page.drawRectangle({
         x: x,
-        y: pageHeight - y - height,
-        width: width,
-        height: height,
+        y: adjustedY,
+        width: width + 5, // 增加一些填充
+        height: height + 2,
         color: rgb(1, 1, 1),
+        // opacity: 0.5, // 暂时注释，确保完全覆盖
       });
 
       // 添加替换后的文本
       page.drawText(editText, {
         x: x,
-        y: pageHeight - y - height,
-        size: height - 4,
-        font: customFont,
+        y: adjustedY,
+        size: height - 4, // 根据高度调整字体大小
+        font: helveticaFont, // 使用标准字体
         color: rgb(0, 0, 0),
       });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+
       const url = URL.createObjectURL(blob);
       setEditedPdf(url);
 
-      console.log('替换成功，新的 PDF URL:', url); // 调试输出
+      console.log('替换成功，新的 PDF URL:', url);
     } catch (error) {
       console.error('编辑 PDF 失败:', error);
       alert('编辑 PDF 时发生错误，请检查控制台以获取详细信息。');
@@ -187,6 +205,16 @@ function App() {
                 />
               ))}
             </Document>
+          )}
+          {editedPdf && (
+            <div>
+              <h2>修改后的 PDF 预览</h2>
+              <Document file={editedPdf}>
+                {Array.from(new Array(numPages), (el, index) => (
+                  <Page key={`page_${index + 1}`} pageNumber={index + 1} width={600} />
+                ))}
+              </Document>
+            </div>
           )}
         </div>
 
@@ -246,9 +274,11 @@ function App() {
           )}
           <br />
           {editedPdf && (
-            <button onClick={downloadPdf}>
-              下载编辑后的 PDF
-            </button>
+            <>
+              <button onClick={downloadPdf}>
+                下载编辑后的 PDF
+              </button>
+            </>
           )}
         </div>
       </div>
