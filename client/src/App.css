@@ -1,0 +1,56 @@
+/* client/src/App.css */
+
+.App {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.upload-section,
+.pdf-list-section,
+.pdf-viewer-section,
+.edit-section {
+  margin-bottom: 30px;
+}
+
+.upload-section input[type="file"] {
+  margin-right: 10px;
+}
+
+.pdf-list-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.pdf-list-section li {
+  margin-bottom: 10px;
+}
+
+.pdf-list-section button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.pdf-viewer-section {
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+}
+
+.edit-form label {
+  margin-bottom: 10px;
+}
+
+.edit-form input {
+  margin-left: 10px;
+}
+
+.edit-form button {
+  width: 100px;
+  padding: 5px;
+  cursor: pointer;
+}
