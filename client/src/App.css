@@ -1,56 +1,53 @@
 /* client/src/App.css */
+@import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+@import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 .App {
   font-family: Arial, sans-serif;
   padding: 20px;
 }
 
-.upload-section,
-.pdf-list-section,
-.pdf-viewer-section,
-.edit-section {
-  margin-bottom: 30px;
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
 }
 
-.upload-section input[type="file"] {
-  margin-right: 10px;
-}
-
-.pdf-list-section ul {
-  list-style: none;
-  padding: 0;
-}
-
-.pdf-list-section li {
-  margin-bottom: 10px;
-}
-
-.pdf-list-section button {
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.pdf-viewer-section {
+.pdf-viewer {
+  flex: 3;
   border: 1px solid #ccc;
   padding: 10px;
+  overflow: auto;
+  height: 80vh;
 }
 
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  max-width: 300px;
+.control-panel {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 80vh;
+  overflow: auto;
 }
 
-.edit-form label {
+.control-panel h2 {
+  margin-top: 0;
+}
+
+.control-panel label {
+  display: block;
   margin-bottom: 10px;
 }
 
-.edit-form input {
-  margin-left: 10px;
+.control-panel select,
+.control-panel input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
 }
 
-.edit-form button {
-  width: 100px;
-  padding: 5px;
+.control-panel button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
   cursor: pointer;
 }
