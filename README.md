@@ -1,4 +1,3 @@
-```markdown
 # PDF 编辑器
 
 一个基于浏览器的 PDF 编辑工具，允许用户选择并替换 PDF 中的文本，并生成编辑后的 PDF 文件。
@@ -84,5 +83,3 @@ pdf-editor/
 ## 许可证
 
 [MIT](LICENSE)
-
-```
