@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+```markdown
+# PDF 编辑器
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+一个基于浏览器的 PDF 编辑工具，允许用户选择并替换 PDF 中的文本，并生成编辑后的 PDF 文件。
 
-## Available Scripts
+## 快速开始
 
-In the project directory, you can run:
+### 1. 克隆仓库
 
-### `npm start`
+```bash
+git clone https://github.com/davexxx1214/editable-pdf-app.git
+cd pdf-editor
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 2. 运行服务器
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+cd server
+node server.js
+```
 
-### `npm test`
+### 3. 设置客户端
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+cd client
+npm install
+npm run start
+```
 
-### `npm run build`
+## 使用指南
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. 选择要修改的文本
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+在页面上上传并加载您的 PDF 文件。然后，在 PDF 页面上选中您想要修改的文本。
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+![选中要修改的文本](snapshot/before.png)
 
-### `npm run eject`
+### 2. 替换选中的文本
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+选中实例后，输入您想替换的新文本，然后点击“替换选中的文本”按钮。
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+![替换后的效果](snapshot/after.png)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 3. 下载编辑后的 PDF
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+完成编辑后，点击“下载编辑后的 PDF”按钮，即可下载生成的新 PDF 文件。
 
-## Learn More
+## 目前的限制
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. **文本覆盖**  
+   因为使用的是免费的 `pdf-lib` 库，仅支持在原来的文本框上绘制一层新的图层。这意味着旧的文本框并没有被删除，仅仅是被新的文本覆盖。
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+2. **背景颜色依赖**  
+   目前使用的是默认的白色文本框。如果 PDF 的背景不是白色，可能需要考虑使用其他背景色，以确保新文本的覆盖效果。
 
-### Code Splitting
+## 项目结构
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+pdf-editor/
+├── client/
+│   ├── src/
+│   └── package.json
+├── server/
+│   ├── server.js
+│   └── package.json
+├── snapshot/
+│   ├── before.png
+│   └── after.png
+└── README.md
+```
 
-### Analyzing the Bundle Size
+## 技术栈
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- **前端**：React, pdf-lib, pdfjs-dist
+- **后端**：Node.js, Express
 
-### Making a Progressive Web App
+## 贡献
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+欢迎贡献! 请提交 Pull Request 或提出 Issue 来讨论您的想法和建议。
 
-### Advanced Configuration
+## 许可证
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+[MIT](LICENSE)
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```

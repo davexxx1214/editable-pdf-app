@@ -85,16 +85,6 @@ function App() {
     }
   }, [file, searchText]);
 
-  // 加载字体文件并返回 Uint8Array
-  const loadFont = async () => {
-    const response = await fetch('/fonts/Roboto-Regular.ttf'); // 确保字体文件放在 public/fonts 目录下
-    if (!response.ok) {
-      throw new Error('无法加载字体文件');
-    }
-    const fontArrayBuffer = await response.arrayBuffer();
-    return new Uint8Array(fontArrayBuffer);
-  };
-
   // 处理文本选择
   const handleTextSelection = () => {
     const selection = window.getSelection();
@@ -135,7 +125,6 @@ function App() {
       const { pageNumber, x, y, width, height } = selectedInstance;
   
       const page = pages[pageNumber - 1];
-      const { height: pageHeight } = page.getSize();
   
       // 动态调整偏移量和高度倍率
       const offsetY = -7; // 调整偏移量
@@ -161,9 +150,6 @@ function App() {
         color: rgb(1, 1, 1),
         opacity: 1, // 保证不透明
       });
-  
-      // 绘制替换后的文本，确保垂直居中
-      const newTextY = rectY + (rectHeight - height * 0.8) / 2;
   
       // 使用原始文本的高度来设置字体大小
       page.drawText(editText, {
