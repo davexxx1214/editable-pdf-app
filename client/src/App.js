@@ -138,14 +138,14 @@ function App() {
       const { height: pageHeight } = page.getSize();
   
       // 动态调整偏移量和高度倍率
-      const offsetY = -10; // 调整偏移量
+      const offsetY = -7; // 调整偏移量
       const heightMultiplier = 2.0; // 调整高度倍率
   
       const adjustedY = y - offsetY;
   
       // 计算覆盖矩形的位置和大小
       const rectX = x - 2; // 增加填充
-      const rectY = adjustedY - height * 0.5; // 调整 y 坐标
+      const rectY = adjustedY - height * 0.4; // 调整 y 坐标
       const rectWidth = width + 4; // 增加填充
       const rectHeight = height * heightMultiplier; // 增加高度倍率
   
@@ -154,20 +154,22 @@ function App() {
   
       // 绘制白色矩形覆盖原有文本
       page.drawRectangle({
-        x: rectX,
-        y: rectY,
-        width: rectWidth,
-        height: rectHeight,
+        x: x - 2,
+        y: adjustedY - height * 0.8,
+        width: width + 4,
+        height: height * heightMultiplier,
         color: rgb(1, 1, 1),
+        opacity: 1, // 保证不透明
       });
   
       // 绘制替换后的文本，确保垂直居中
       const newTextY = rectY + (rectHeight - height * 0.8) / 2;
   
+      // 使用原始文本的高度来设置字体大小
       page.drawText(editText, {
         x: x,
-        y: newTextY,
-        size: height * 0.8, // 根据高度调整字体大小
+        y: adjustedY,
+        size: height, // 使用原始文本的高度作为字体大小
         font: helveticaFont,
         color: rgb(0, 0, 0),
       });
