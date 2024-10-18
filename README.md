@@ -11,14 +11,7 @@ git clone https://github.com/davexxx1214/editable-pdf-app.git
 cd pdf-editor
 ```
 
-### 2. 运行服务器
-
-```bash
-cd server
-node server.js
-```
-
-### 3. 设置客户端
+### 2. 运行代码
 
 ```bash
 cd client
