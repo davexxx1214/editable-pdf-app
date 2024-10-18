@@ -55,12 +55,6 @@ pdf-editor/
 ├── client/
 │   ├── src/
 │   └── package.json
-├── server/
-│   ├── server.js
-│   └── package.json
-├── snapshot/
-│   ├── before.png
-│   └── after.png
 └── README.md
 ```
 
