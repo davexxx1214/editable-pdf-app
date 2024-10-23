@@ -26,8 +26,6 @@ function App() {
   // 处理文本框点击
   const handleBoxClick = (index) => {
     setSelectedBox(index);
-    // 清除当前的文本选择
-    window.getSelection().removeAllRanges();
   };
 
   // 监听鼠标抬起事件以捕捉文本选择
