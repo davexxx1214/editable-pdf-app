@@ -12,7 +12,9 @@ function App() {
   const [textBoxes, setTextBoxes] = useState(['', '', '', '']);
   // 每个文本框对应一个高亮，存储 { page, x, y, width, height, text }
   const [highlights, setHighlights] = useState([null, null, null, null]);
+  const [scale, setScale] = useState(1); // 新增缩放比例状态
   const pdfWrapperRef = useRef(null);
+  const pageRefs = useRef({}); // 存储每页的引用
 
   // 处理文件上传
   const onFileChange = (e) => {
@@ -50,10 +52,11 @@ function App() {
         const rect = range.getBoundingClientRect();
         const pageRect = ancestor.getBoundingClientRect();
 
-        const x = rect.left - pageRect.left;
-        const y = rect.top - pageRect.top;
-        const width = rect.width;
-        const height = rect.height;
+        // 计算相对于页面容器的坐标，并考虑缩放比例
+        const x = (rect.left - pageRect.left) / scale;
+        const y = (rect.top - pageRect.top) / scale;
+        const width = rect.width / scale;
+        const height = rect.height / scale;
 
         const newHighlights = [...highlights];
         newHighlights[selectedBox] = { page: pageNumber, x, y, width, height, text: selectedText };
@@ -73,13 +76,20 @@ function App() {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [selectedBox, highlights, textBoxes, file]);
+  }, [selectedBox, highlights, textBoxes, file, scale]);
 
   // 更新文本框内容
   const handleInputChange = (index, value) => {
     const newTextBoxes = [...textBoxes];
     newTextBoxes[index] = value;
     setTextBoxes(newTextBoxes);
+  };
+
+  // 在每页加载成功后获取缩放比例
+  const onPageLoadSuccess = (page, pageNumber) => {
+    const viewport = page.getViewport({ scale: 1 });
+    const actualWidth = pageRefs.current[pageNumber].getBoundingClientRect().width;
+    setScale(actualWidth / viewport.width);
   };
 
   // 渲染高亮层
@@ -92,10 +102,10 @@ function App() {
           className="highlight"
           style={{
             position: 'absolute',
-            left: hl.x,
-            top: hl.y,
-            width: hl.width,
-            height: hl.height,
+            left: hl.x * scale,
+            top: hl.y * scale,
+            width: hl.width * scale,
+            height: hl.height * scale,
             backgroundColor: 'yellow',
             opacity: 0.4,
             pointerEvents: 'none',
@@ -124,12 +134,14 @@ function App() {
                   key={`page_${index + 1}`}
                   className="page-container"
                   data-page-number={index + 1}
+                  ref={(el) => (pageRefs.current[index + 1] = el)}
                 >
                   <Page
                     pageNumber={index + 1}
                     width={600}
                     renderAnnotationLayer={false}
                     renderTextLayer={true}
+                    onLoadSuccess={(page) => onPageLoadSuccess(page, index + 1)}
                   />
                   {/* 渲染对应的高亮 */}
                   {renderHighlights(index + 1)}

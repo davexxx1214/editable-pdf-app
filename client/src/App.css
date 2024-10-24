@@ -35,6 +35,10 @@
 
 .highlight {
   pointer-events: none;
+  position: absolute;
+  background-color: yellow;
+  opacity: 0.4;
+  z-index: 1;
 }
 .page-container {
   position: relative;
