@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import axios from 'axios';
 import './App.css';
 
 // 设置 pdfjs Worker 来自 public 文件夹
@@ -7,6 +8,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.
 
 function App() {
   const [file, setFile] = useState(null);
+  const [savedPDFs, setSavedPDFs] = useState([]); // 保存的 PDF 列表
   const [numPages, setNumPages] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
   const [textBoxes, setTextBoxes] = useState(['', '', '', '']);
@@ -14,13 +16,63 @@ function App() {
   const pdfWrapperRef = useRef(null);
   const pageRefs = useRef({});
 
+  // 获取已保存的 PDF 列表
+  useEffect(() => {
+    const fetchSavedPDFs = async () => {
+      try {
+        const response = await axios.get('/api/saved-pdfs');
+        // 确保使用 name 属性或原始值
+        setSavedPDFs(response.data.map(pdf => pdf.name || pdf));
+      } catch (error) {
+        console.error('获取 PDF 列表失败', error);
+      }
+    };
+    fetchSavedPDFs();
+  }, []);
+
+  // 从已保存的 PDF 中选择文件
+  const handleSelectSavedPDF = async (filename) => {
+    try {
+      const response = await axios.get(`/api/get-pdf/${filename}`, {
+        responseType: 'blob'
+      });
+      const pdfFile = new File([response.data], filename, { type: 'application/pdf' });
+      setFile(pdfFile);
+      setHighlights([null, null, null, null]);
+      setTextBoxes(['', '', '', '']);
+      setSelectedBox(null);
+    } catch (error) {
+      console.error('加载 PDF 失败', error);
+    }
+  };
+
   // 处理文件上传
-  const onFileChange = (e) => {
+  const onFileChange = async (e) => {
     const uploadedFile = e.target.files[0];
-    setFile(uploadedFile);
-    setHighlights([null, null, null, null]);
-    setTextBoxes(['', '', '', '']);
-    setSelectedBox(null);
+    // 确保只处理 PDF 文件
+    if (uploadedFile && uploadedFile.type === 'application/pdf') {
+      const formData = new FormData();
+      formData.append('pdf', uploadedFile);
+
+      try {
+        // 上传 PDF 到服务器
+        await axios.post('/api/save-pdf', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        // 重新获取已保存的 PDF 列表
+        const response = await axios.get('/api/saved-pdfs');
+        setSavedPDFs(response.data);
+
+        // 设置当前文件
+        setFile(uploadedFile);
+        setHighlights([null, null, null, null]);
+        setTextBoxes(['', '', '', '']);
+        setSelectedBox(null);
+      } catch (error) {
+        console.error('上传 PDF 失败', error);
+      }
+    }
   };
 
   // 处理文本框点击
@@ -114,6 +166,20 @@ function App() {
         {/* 左侧：PDF 预览 */}
         <div className="pdf-viewer" ref={pdfWrapperRef}>
           <input type="file" accept="application/pdf" onChange={onFileChange} />
+          
+          {/* 已保存的 PDF 列表 */}
+          <div className="saved-pdfs">
+            <h3>已保存的 PDF</h3>
+              {savedPDFs.map((pdf) => (
+                <button 
+                  key={pdf.name || pdf} // 使用 name 或原始值作为 key
+                  onClick={() => handleSelectSavedPDF(pdf.name || pdf)}
+                >
+                  {pdf.name || pdf} {/* 显示文件名 */}
+                </button>
+              ))}
+          </div>
+          
           {file && (
             <Document
               file={file}
