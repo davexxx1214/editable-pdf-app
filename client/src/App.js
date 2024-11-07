@@ -34,46 +34,69 @@ function App() {
   const handleSelectSavedPDF = async (filename) => {
     try {
       const response = await axios.get(`/api/get-pdf/${filename}`, {
-        responseType: 'blob'
+        // 改为 base64 编码
+        responseType: 'arraybuffer',
+        headers: {
+          'Content-Type': 'application/pdf'
+        }
       });
-      const pdfFile = new File([response.data], filename, { type: 'application/pdf' });
-      setFile(pdfFile);
+  
+      // 将 ArrayBuffer 转换为 Base64
+      const base64Pdf = btoa(
+        new Uint8Array(response.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+  
+      // 使用 data URI 格式
+      const pdfDataUri = `data:application/pdf;base64,${base64Pdf}`;
+  
+      setFile(pdfDataUri);  // 使用 data URI
       setHighlights([null, null, null, null]);
       setTextBoxes(['', '', '', '']);
       setSelectedBox(null);
     } catch (error) {
       console.error('加载 PDF 失败', error);
+      alert('无法加载 PDF 文件，请检查文件是否损坏');
     }
   };
 
-  // 处理文件上传
-  const onFileChange = async (e) => {
-    const uploadedFile = e.target.files[0];
-    // 确保只处理 PDF 文件
-    if (uploadedFile && uploadedFile.type === 'application/pdf') {
-      const formData = new FormData();
-      formData.append('pdf', uploadedFile);
+// 处理文件上传
+const onFileChange = async (e) => {
+  const uploadedFile = e.target.files[0];
+  // 确保只处理 PDF 文件
+  if (uploadedFile && uploadedFile.type === 'application/pdf') {
+    const formData = new FormData();
+    formData.append('pdf', uploadedFile);
 
-      try {
-        // 上传 PDF 到服务器
-        await axios.post('/api/save-pdf', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+    try {
+      // 上传 PDF 到服务器
+      await axios.post('/api/save-pdf', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
-        // 重新获取已保存的 PDF 列表
-        const response = await axios.get('/api/saved-pdfs');
-        setSavedPDFs(response.data);
+      // 重新获取已保存的 PDF 列表
+      const response = await axios.get('/api/saved-pdfs');
+      setSavedPDFs(response.data.map(pdf => pdf.name || pdf));
 
-        // 设置当前文件
-        setFile(uploadedFile);
-        setHighlights([null, null, null, null]);
-        setTextBoxes(['', '', '', '']);
-        setSelectedBox(null);
-      } catch (error) {
-        console.error('上传 PDF 失败', error);
-      }
+      // 创建 URL 对象
+      const pdfUrl = URL.createObjectURL(uploadedFile);
+      setFile(pdfUrl);
+      setHighlights([null, null, null, null]);
+      setTextBoxes(['', '', '', '']);
+      setSelectedBox(null);
+    } catch (error) {
+      console.error('上传 PDF 失败', error);
+    }
+  }
+};
+
+// 注意：在组件卸载时清理 URL 对象
+useEffect(() => {
+  return () => {
+    if (file) {
+      URL.revokeObjectURL(file);
     }
   };
+}, [file]);
 
   // 处理文本框点击
   const handleBoxClick = (index) => {
