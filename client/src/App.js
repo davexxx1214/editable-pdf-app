@@ -109,48 +109,72 @@ useEffect(() => {
       if (selectedBox === null) return;
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
-      if (selectedText && file) {
-        const range = selection.getRangeAt(0);
 
-        // 找到包含选择范围的 page-container
+      console.log("selected text length = " + selectedText.length)
+      
+      // 添加长度检查，避免选中过长文本
+      if (selectedText && file && selectedText.length < 100) {
+        const range = selection.getRangeAt(0);
+        
+        // 检查选区是否在文本层内
+        let textLayer = null;
         let ancestor = range.commonAncestorContainer;
+        while (ancestor && !textLayer) {
+          if (ancestor.classList?.contains('react-pdf__Page__textContent')) {
+            textLayer = ancestor;
+            break;
+          }
+          ancestor = ancestor.parentNode;
+        }
+        
+        // 如果不在文本层内，直接返回
+        if (!textLayer) {
+          window.getSelection().removeAllRanges();
+          return;
+        }
+  
+        // 找到包含选择范围的 page-container
         while (ancestor && !ancestor.classList?.contains('page-container')) {
           ancestor = ancestor.parentNode;
         }
         if (!ancestor) return;
-
+  
         const pageNumber = parseInt(ancestor.getAttribute('data-page-number'), 10);
         if (isNaN(pageNumber)) return;
-
+  
         const rect = range.getBoundingClientRect();
         const pageRect = ancestor.getBoundingClientRect();
-
+  
         // 计算相对于页面容器的坐标
         const x = rect.left - pageRect.left;
         const y = rect.top - pageRect.top;
         const width = rect.width;
         const height = rect.height;
-
+  
         const newHighlights = [...highlights];
         newHighlights[selectedBox] = { page: pageNumber, x, y, width, height, text: selectedText };
         setHighlights(newHighlights);
-
+  
         const newTextBoxes = [...textBoxes];
         newTextBoxes[selectedBox] = selectedText;
         setTextBoxes(newTextBoxes);
-
+  
         // 清除选择
         window.getSelection().removeAllRanges();
         setSelectedBox(null);
       }
+      
+      // 如果选中的文本太长，清除选择
+      if (selectedText.length >= 100) {
+        window.getSelection().removeAllRanges();
+      }
     };
-
+  
     document.addEventListener('mouseup', handleMouseUp);
     return () => {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [selectedBox, highlights, textBoxes, file]);
-
   // 更新文本框内容
   const handleInputChange = (index, value) => {
     const newTextBoxes = [...textBoxes];
@@ -208,6 +232,11 @@ useEffect(() => {
               file={file}
               onLoadSuccess={({ numPages }) => setNumPages(numPages)}
               className="document"
+              options={{
+                cMapUrl: 'cmaps/',
+                cMapPacked: true,
+                standardFontDataUrl: 'standard_fonts/'
+              }}
             >
               {Array.from(new Array(numPages), (el, index) => (
                 <div
