@@ -111,13 +111,25 @@ function App() {
 
   const searchResultsDropdown = (
     <div className="search-section">
+    <div className="search-input-wrapper">
       <label>搜索 PDF 文本：</label>
-      <input
-        type="text"
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        placeholder="输入要搜索的文本"
-      />
+      <div className="search-input-container">
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="输入要搜索的文本"
+        />
+        {searchText && (
+          <button 
+            className="clear-search-btn"
+            onClick={() => setSearchText('')}
+            title="清除搜索"
+            aria-label="清除搜索"
+          />
+        )}
+      </div>
+    </div>
       {searchResults.length > 0 && (
         <div className="search-results-dropdown">
           {searchResults.map((result, index) => (
@@ -380,15 +392,6 @@ useEffect(() => {
             </div>
           ))}
           {searchResultsDropdown}
-          <div>
-            <label>搜索 PDF 文本：</label>
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="输入要搜索的文本"
-            />
-          </div>
         </div>
       </div>
     </div>
