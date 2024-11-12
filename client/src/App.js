@@ -22,7 +22,6 @@ function App() {
   useEffect(() => {
     if (searchText) {
       const newSearchHighlights = [];
-      // 遍历所有页面，查找匹配的文本
       for (let i = 1; i <= numPages; i++) {
         const pageRef = pageRefs.current[i];
         if (pageRef) {
@@ -30,17 +29,45 @@ function App() {
           if (textLayer) {
             const textNodes = textLayer.querySelectorAll('span');
             textNodes.forEach((node) => {
-              if (node.textContent.includes(searchText)) {
-                const rect = node.getBoundingClientRect();
-                const pageRect = pageRef.getBoundingClientRect();
-                newSearchHighlights.push({
-                  page: i,
-                  x: rect.left - pageRect.left,
-                  y: rect.top - pageRect.top,
-                  width: rect.width,
-                  height: rect.height,
-                  text: node.textContent,
-                });
+              // 确保节点有文本内容
+              if (!node.firstChild || node.firstChild.nodeType !== Node.TEXT_NODE) return;
+              
+              const nodeText = node.textContent;
+              // 确保搜索文本和节点文本都不为空
+              if (!nodeText || !searchText) return;
+              
+              // 使用正则表达式进行精确匹配
+              const searchRegex = new RegExp(searchText, 'gi');
+              let match;
+              
+              try {
+                while ((match = searchRegex.exec(nodeText)) !== null) {
+                  // 检查索引是否有效
+                  if (match.index >= nodeText.length) continue;
+                  
+                  const range = document.createRange();
+                  try {
+                    range.setStart(node.firstChild, match.index);
+                    range.setEnd(node.firstChild, Math.min(match.index + searchText.length, nodeText.length));
+                    
+                    const rect = range.getBoundingClientRect();
+                    const pageRect = pageRef.getBoundingClientRect();
+                    
+                    newSearchHighlights.push({
+                      page: i,
+                      x: rect.left - pageRect.left,
+                      y: rect.top - pageRect.top,
+                      width: rect.width,
+                      height: rect.height,
+                      text: searchText
+                    });
+                  } catch (e) {
+                    console.warn('无法为此匹配创建范围:', e);
+                    continue;
+                  }
+                }
+              } catch (e) {
+                console.warn('搜索文本时出错:', e);
               }
             });
           }
