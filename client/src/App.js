@@ -13,8 +13,67 @@ function App() {
   const [selectedBox, setSelectedBox] = useState(null);
   const [textBoxes, setTextBoxes] = useState(['', '', '', '']);
   const [highlights, setHighlights] = useState([null, null, null, null]);
+  
+  const [searchText, setSearchText] = useState(''); // 新增状态用于存储搜索文本
+  const [searchHighlights, setSearchHighlights] = useState([]); // 新增状态用于存储搜索高亮
   const pdfWrapperRef = useRef(null);
   const pageRefs = useRef({});
+
+  useEffect(() => {
+    if (searchText) {
+      const newSearchHighlights = [];
+      // 遍历所有页面，查找匹配的文本
+      for (let i = 1; i <= numPages; i++) {
+        const pageRef = pageRefs.current[i];
+        if (pageRef) {
+          const textLayer = pageRef.querySelector('.textLayer');
+          if (textLayer) {
+            const textNodes = textLayer.querySelectorAll('span');
+            textNodes.forEach((node) => {
+              if (node.textContent.includes(searchText)) {
+                const rect = node.getBoundingClientRect();
+                const pageRect = pageRef.getBoundingClientRect();
+                newSearchHighlights.push({
+                  page: i,
+                  x: rect.left - pageRect.left,
+                  y: rect.top - pageRect.top,
+                  width: rect.width,
+                  height: rect.height,
+                  text: node.textContent,
+                });
+              }
+            });
+          }
+        }
+      }
+      setSearchHighlights(newSearchHighlights);
+    } else {
+      setSearchHighlights([]);
+    }
+  }, [searchText, numPages, pageRefs]);
+
+  const renderSearchHighlights = (currentPage) => {
+    return searchHighlights.map((hl, index) => {
+      if (!hl || hl.page !== currentPage) return null;
+      return (
+        <div
+          key={index}
+          className="highlight"
+          style={{
+            position: 'absolute',
+            left: hl.x,
+            top: hl.y,
+            width: hl.width,
+            height: hl.height,
+            backgroundColor: 'blue',
+            opacity: 0.4,
+            pointerEvents: 'none',
+            zIndex: 1,
+          }}
+        ></div>
+      );
+    });
+  };
 
   // 获取已保存的 PDF 列表
   useEffect(() => {
@@ -238,6 +297,7 @@ useEffect(() => {
                   />
                   {/* 渲染对应的高亮 */}
                   {renderHighlights(index + 1)}
+                  {renderSearchHighlights(index + 1)} {/* 新增渲染搜索高亮 */}
                 </div>
               ))}
             </Document>
@@ -259,6 +319,15 @@ useEffect(() => {
               />
             </div>
           ))}
+          <div>
+            <label>搜索 PDF 文本：</label>
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="输入要搜索的文本"
+            />
+          </div>
         </div>
       </div>
     </div>
