@@ -103,53 +103,67 @@ useEffect(() => {
     setSelectedBox(index);
   };
 
-  // 监听鼠标抬起事件以捕捉文本选择
-  useEffect(() => {
-    const handleMouseUp = () => {
-      if (selectedBox === null) return;
-      const selection = window.getSelection();
-      const selectedText = selection.toString().trim();
-      if (selectedText && file) {
-        const range = selection.getRangeAt(0);
+  // 处理鼠标抬起事件以捕捉文本选择
+useEffect(() => {
+  const handleMouseUp = () => {
+    if (selectedBox === null) return;
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    if (selectedText && file) {
+      const range = selection.getRangeAt(0);
 
-        // 找到包含选择范围的 page-container
-        let ancestor = range.commonAncestorContainer;
-        while (ancestor && !ancestor.classList?.contains('page-container')) {
-          ancestor = ancestor.parentNode;
-        }
-        if (!ancestor) return;
+      // 检查选择是否跨越多个行
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
 
-        const pageNumber = parseInt(ancestor.getAttribute('data-page-number'), 10);
-        if (isNaN(pageNumber)) return;
+      // 获取选择的起始和结束行
+      const startLine = startContainer.parentElement.closest('.textLayer')?.getBoundingClientRect().top;
+      const endLine = endContainer.parentElement.closest('.textLayer')?.getBoundingClientRect().top;
 
-        const rect = range.getBoundingClientRect();
-        const pageRect = ancestor.getBoundingClientRect();
-
-        // 计算相对于页面容器的坐标
-        const x = rect.left - pageRect.left;
-        const y = rect.top - pageRect.top;
-        const width = rect.width;
-        const height = rect.height;
-
-        const newHighlights = [...highlights];
-        newHighlights[selectedBox] = { page: pageNumber, x, y, width, height, text: selectedText };
-        setHighlights(newHighlights);
-
-        const newTextBoxes = [...textBoxes];
-        newTextBoxes[selectedBox] = selectedText;
-        setTextBoxes(newTextBoxes);
-
-        // 清除选择
-        window.getSelection().removeAllRanges();
-        setSelectedBox(null);
+      if (startLine !== endLine) {
+        console.log('检测到跨行选择，将清除所选文本');
+        selection.removeAllRanges();
+        return;
       }
-    };
 
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [selectedBox, highlights, textBoxes, file]);
+      // 找到包含选择范围的 page-container
+      let ancestor = range.commonAncestorContainer;
+      while (ancestor && !ancestor.classList?.contains('page-container')) {
+        ancestor = ancestor.parentNode;
+      }
+      if (!ancestor) return;
+
+      const pageNumber = parseInt(ancestor.getAttribute('data-page-number'), 10);
+      if (isNaN(pageNumber)) return;
+
+      const rect = range.getBoundingClientRect();
+      const pageRect = ancestor.getBoundingClientRect();
+
+      // 计算相对于页面容器的坐标
+      const x = rect.left - pageRect.left;
+      const y = rect.top - pageRect.top;
+      const width = rect.width;
+      const height = rect.height;
+
+      const newHighlights = [...highlights];
+      newHighlights[selectedBox] = { page: pageNumber, x, y, width, height, text: selectedText };
+      setHighlights(newHighlights);
+
+      const newTextBoxes = [...textBoxes];
+      newTextBoxes[selectedBox] = selectedText;
+      setTextBoxes(newTextBoxes);
+
+      // 清除选择
+      window.getSelection().removeAllRanges();
+      setSelectedBox(null);
+    }
+  };
+
+  document.addEventListener('mouseup', handleMouseUp);
+  return () => {
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+}, [selectedBox, highlights, textBoxes, file]);
 
   // 更新文本框内容
   const handleInputChange = (index, value) => {
