@@ -16,12 +16,15 @@ function App() {
   
   const [searchText, setSearchText] = useState(''); // 新增状态用于存储搜索文本
   const [searchHighlights, setSearchHighlights] = useState([]); // 新增状态用于存储搜索高亮
+  const [searchResults, setSearchResults] = useState([]); // 存储搜索结果
+  const [selectedResult, setSelectedResult] = useState(null); // 存储选中的搜索结果
+
   const pdfWrapperRef = useRef(null);
   const pageRefs = useRef({});
 
   useEffect(() => {
     if (searchText) {
-      const newSearchHighlights = [];
+      const newSearchResults = [];
       for (let i = 1; i <= numPages; i++) {
         const pageRef = pageRefs.current[i];
         if (pageRef) {
@@ -29,20 +32,16 @@ function App() {
           if (textLayer) {
             const textNodes = textLayer.querySelectorAll('span');
             textNodes.forEach((node) => {
-              // 确保节点有文本内容
               if (!node.firstChild || node.firstChild.nodeType !== Node.TEXT_NODE) return;
               
               const nodeText = node.textContent;
-              // 确保搜索文本和节点文本都不为空
               if (!nodeText || !searchText) return;
               
-              // 使用正则表达式进行精确匹配
               const searchRegex = new RegExp(searchText, 'gi');
               let match;
               
               try {
                 while ((match = searchRegex.exec(nodeText)) !== null) {
-                  // 检查索引是否有效
                   if (match.index >= nodeText.length) continue;
                   
                   const range = document.createRange();
@@ -53,13 +52,18 @@ function App() {
                     const rect = range.getBoundingClientRect();
                     const pageRect = pageRef.getBoundingClientRect();
                     
-                    newSearchHighlights.push({
+                    // 获取所在行的完整文本内容
+                    const lineText = node.parentElement.textContent;
+                    
+                    newSearchResults.push({
                       page: i,
                       x: rect.left - pageRect.left,
                       y: rect.top - pageRect.top,
                       width: rect.width,
                       height: rect.height,
-                      text: searchText
+                      text: searchText,
+                      lineText: lineText, // 添加行文本
+                      fullMatch: `...${lineText.substring(Math.max(0, match.index - 20), match.index)}${searchText}${lineText.substring(match.index + searchText.length, match.index + searchText.length + 20)}...`
                     });
                   } catch (e) {
                     console.warn('无法为此匹配创建范围:', e);
@@ -73,34 +77,63 @@ function App() {
           }
         }
       }
-      setSearchHighlights(newSearchHighlights);
+      setSearchResults(newSearchResults);
+      setSelectedResult(null); // 重置选中结果
     } else {
-      setSearchHighlights([]);
+      setSearchResults([]);
+      setSelectedResult(null);
     }
-  }, [searchText, numPages, pageRefs]);
+  }, [searchText, numPages]);
 
   const renderSearchHighlights = (currentPage) => {
-    return searchHighlights.map((hl, index) => {
-      if (!hl || hl.page !== currentPage) return null;
-      return (
-        <div
-          key={index}
-          className="highlight"
-          style={{
-            position: 'absolute',
-            left: hl.x,
-            top: hl.y,
-            width: hl.width,
-            height: hl.height,
-            backgroundColor: 'blue',
-            opacity: 0.4,
-            pointerEvents: 'none',
-            zIndex: 1,
-          }}
-        ></div>
-      );
-    });
+    if (!selectedResult) return null;
+    
+    // 只渲染选中的结果
+    if (selectedResult.page !== currentPage) return null;
+    
+    return (
+      <div
+        className="highlight"
+        style={{
+          position: 'absolute',
+          left: selectedResult.x,
+          top: selectedResult.y,
+          width: selectedResult.width,
+          height: selectedResult.height,
+          backgroundColor: 'blue',
+          opacity: 0.4,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+    );
   };
+
+  const searchResultsDropdown = (
+    <div className="search-section">
+      <label>搜索 PDF 文本：</label>
+      <input
+        type="text"
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        placeholder="输入要搜索的文本"
+      />
+      {searchResults.length > 0 && (
+        <div className="search-results-dropdown">
+          {searchResults.map((result, index) => (
+            <div
+              key={index}
+              className={`search-result-item ${selectedResult === result ? 'selected' : ''}`}
+              onClick={() => setSelectedResult(result)}
+            >
+              <span>第 {result.page} 页: </span>
+              <span dangerouslySetInnerHTML={{ __html: result.fullMatch.replace(searchText, `<mark>${searchText}</mark>`) }} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   // 获取已保存的 PDF 列表
   useEffect(() => {
@@ -346,6 +379,7 @@ useEffect(() => {
               />
             </div>
           ))}
+          {searchResultsDropdown}
           <div>
             <label>搜索 PDF 文本：</label>
             <input
