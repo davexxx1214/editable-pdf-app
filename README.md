@@ -92,16 +92,6 @@ pdf-editor/
 - `multer`: 处理文件上传
 - `express`: Web 服务器框架
 
-## 贡献
-
-欢迎贡献! 请提交 Pull Request 或提出 Issue 来讨论您的想法和建议。
-
-## 许可证
-
-[MIT](LICENSE)
-
-## 常见问题
-
 ### 为什么服务器要压缩 PDF？
 
 - 减少存储空间
