@@ -34,6 +34,12 @@ function App() {
             textNodes.forEach((node) => {
               if (!node.firstChild || node.firstChild.nodeType !== Node.TEXT_NODE) return;
               
+              // 检查节点是否可见
+              const style = window.getComputedStyle(node);
+              if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                return;
+              }
+
               const nodeText = node.textContent;
               if (!nodeText || !searchText) return;
               
