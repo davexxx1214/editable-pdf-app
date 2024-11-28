@@ -40,6 +40,19 @@ function App() {
                 return;
               }
 
+              // 检查是否有重叠
+            const nodeRect = node.getBoundingClientRect();
+            const overlapping = Array.from(textNodes).some(otherNode => {
+              if (otherNode === node) return false;
+              const otherRect = otherNode.getBoundingClientRect();
+              return !(nodeRect.right < otherRect.left || 
+                      nodeRect.left > otherRect.right || 
+                      nodeRect.bottom < otherRect.top || 
+                      nodeRect.top > otherRect.bottom);
+            });
+
+            if (overlapping) return;
+
               const nodeText = node.textContent;
               if (!nodeText || !searchText) return;
               
